@@ -1,5 +1,6 @@
 package com.my.edu.kafka;
 
+import org.apache.kafka.clients.producer.Callback;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.clients.producer.RecordMetadata;
@@ -31,13 +32,14 @@ public class KafkaProducer {
 
         try {
             for (int i = 0; i < sendMessageCount; i++) {
-                final ProducerRecord<String, String> record =
-                        new ProducerRecord(TOPIC, "Hello there " + i);
+                String message= "Hello there " + i;
+                ProducerRecord<String, String> record =
+                        new ProducerRecord(TOPIC, message);
+                long startTime = System.currentTimeMillis();
+                RecordMetadata metadata = producer.send(record,new ProducerCallBack(startTime,i,message)).get();
 
-                RecordMetadata metadata = producer.send(record).get();
-
-                System.out.printf("sent record(value=%s) " +
-                                "meta(partition=%d, offset=%d) \n", record.value(), metadata.partition(),
+               System.out.printf("sent record(value=%s) " +
+                                        "meta(partition=%d, offset=%d) \n", record.value(), metadata.partition(),
                         metadata.offset());
             }
         } finally {
@@ -57,5 +59,32 @@ public class KafkaProducer {
         props.put(ProducerConfig.ACKS_CONFIG, "1");
 
         return new org.apache.kafka.clients.producer.KafkaProducer<String, String>(props);
+    }
+}
+
+class ProducerCallBack implements Callback {
+
+    private long startTime;
+    private int key;
+    private String message;
+
+
+    public ProducerCallBack(long startTime, int key, String message) {
+        this.startTime = startTime;
+        this.key = key;
+        this.message = message;
+    }
+
+    public void onCompletion(RecordMetadata recordMetadata, Exception e) {
+        long elapsedTime = System.currentTimeMillis() - startTime;
+        if(recordMetadata == null) {
+            e.printStackTrace();
+        }else{
+            System.out.println("key:" + key
+                    + " val:" + message
+                    + " partition:" + recordMetadata.partition()
+                    + "offset:" + recordMetadata.offset()
+                    + "elapsedTime:" + elapsedTime);
+        }
     }
 }
