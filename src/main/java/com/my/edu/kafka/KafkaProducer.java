@@ -1,6 +1,5 @@
 package com.my.edu.kafka;
 
-import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.clients.producer.RecordMetadata;
@@ -24,30 +23,24 @@ public class KafkaProducer {
         } catch (Exception e) {
             e.printStackTrace();
         }
-        
+
     }
 
-    static void runProducer(final int sendMessageCount) throws Exception {
-        final org.apache.kafka.clients.producer.KafkaProducer<String, String> producer = createProducer();
-        long time = System.currentTimeMillis();
+    static void runProducer(int sendMessageCount) throws Exception {
+        org.apache.kafka.clients.producer.KafkaProducer<String, String> producer = createProducer();
 
         try {
-            for (long index = time; index < time + sendMessageCount; index++) {
+            for (int i = 0; i < sendMessageCount; i++) {
                 final ProducerRecord<String, String> record =
-                        new ProducerRecord(TOPIC, Long.toString(index),
-                                "Hello Mom " +  Long.toString(index));
+                        new ProducerRecord(TOPIC, "Hello there " + i);
 
                 RecordMetadata metadata = producer.send(record).get();
 
-                long elapsedTime = System.currentTimeMillis() - time;
-                System.out.printf("sent record(key=%s value=%s) " +
-                                "meta(partition=%d, offset=%d) time=%d\n",
-                        record.key(), record.value(), metadata.partition(),
-                        metadata.offset(), elapsedTime);
-
+                System.out.printf("sent record(value=%s) " +
+                                "meta(partition=%d, offset=%d) \n", record.value(), metadata.partition(),
+                        metadata.offset());
             }
         } finally {
-            producer.flush();
             producer.close();
         }
     }
@@ -56,12 +49,12 @@ public class KafkaProducer {
         Properties props = new Properties();
         props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG,
                 BOOTSTRAP_SERVERS);
-        props.put(ProducerConfig.CLIENT_ID_CONFIG, "KafkaExampleProducer");
+        props.put(ProducerConfig.CLIENT_ID_CONFIG, "KafkaProducer");
         props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG,
                 StringSerializer.class.getName());
         props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG,
                 StringSerializer.class.getName());
-        props.put(ProducerConfig.ACKS_CONFIG,"1");
+        props.put(ProducerConfig.ACKS_CONFIG, "1");
 
         return new org.apache.kafka.clients.producer.KafkaProducer<String, String>(props);
     }
